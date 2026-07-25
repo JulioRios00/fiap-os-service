@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ServiceOrderStatus } from '../../domain/entities/service-order.entity';
 import { ServiceOrderRepositoryPort } from '../ports/service-order-repository.port';
 import { DomainEventPublisherPort } from '../ports/domain-event-publisher.port';
@@ -13,6 +13,8 @@ interface Input {
 
 @Injectable()
 export class UpdateServiceOrderStatusUseCase {
+  private readonly logger = new Logger(UpdateServiceOrderStatusUseCase.name);
+
   constructor(
     private readonly repository: ServiceOrderRepositoryPort,
     private readonly eventPublisher: DomainEventPublisherPort,
@@ -27,6 +29,9 @@ export class UpdateServiceOrderStatusUseCase {
     existing.updateStatus(input.status);
     const updated = await this.repository.updateStatus(input.id, input.status, input.reason);
     await this.eventPublisher.publish(buildOSStatusUpdatedEvent(updated, input.correlationId));
+    this.logger.log(
+      `Service order ${input.id} status -> ${input.status} (correlationId=${input.correlationId ?? 'none'})`,
+    );
     return updated;
   }
 }

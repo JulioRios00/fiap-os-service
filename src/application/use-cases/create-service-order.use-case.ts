@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ServiceOrder } from '../../domain/entities/service-order.entity';
 import { ServiceOrderRepositoryPort } from '../ports/service-order-repository.port';
 import { DomainEventPublisherPort } from '../ports/domain-event-publisher.port';
@@ -11,6 +11,8 @@ interface Input {
 
 @Injectable()
 export class CreateServiceOrderUseCase {
+  private readonly logger = new Logger(CreateServiceOrderUseCase.name);
+
   constructor(
     private readonly repository: ServiceOrderRepositoryPort,
     private readonly eventPublisher: DomainEventPublisherPort,
@@ -24,6 +26,9 @@ export class CreateServiceOrderUseCase {
 
     const created = await this.repository.create(order);
     await this.eventPublisher.publish(buildOSCreatedEvent(created, input.correlationId));
+    this.logger.log(
+      `Service order ${created.getId()} (${created.getOrderNumber()}) opened (correlationId=${input.correlationId ?? 'none'})`,
+    );
     return created;
   }
 }

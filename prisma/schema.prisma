@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ServiceOrderStatus {
+  OPEN
+  AWAITING_QUOTE
+  QUOTE_APPROVED
+  IN_EXECUTION
+  COMPLETED
+  CANCELLED
+}
+
+model ServiceOrder {
+  id          String             @id @default(uuid())
+  orderNumber String             @unique
+  description String
+  status      ServiceOrderStatus @default(OPEN)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  history     ServiceOrderStatusHistory[]
+
+  @@map("service_orders")
+}
+
+model ServiceOrderStatusHistory {
+  id             String             @id @default(uuid())
+  serviceOrderId String
+  previousStatus ServiceOrderStatus?
+  newStatus      ServiceOrderStatus
+  reason         String?
+  createdAt      DateTime           @default(now())
+  serviceOrder   ServiceOrder       @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@index([serviceOrderId])
+  @@map("service_order_status_history")
+}
+
+model OutboxEvent {
+  id          String   @id @default(uuid())
+  eventType   String
+  aggregateId String
+  version     String
+  payload     Json
+  createdAt   DateTime @default(now())
+  publishedAt DateTime?
+
+  @@index([aggregateId])
+  @@index([eventType])
+  @@map("outbox_events")
+}
+

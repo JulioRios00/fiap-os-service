@@ -34,6 +34,21 @@ npm run prisma:migrate
 npm run start:dev
 ```
 
+## Logging & tracing
+
+Logs are structured JSON via `nestjs-pino`. Every request/log line is tagged
+with `correlationId`, read from the incoming `x-correlation-id` header (set
+by `saga-orchestrator` on every call) or minted if absent. See
+`../docs/architecture.md` ("Monitoring & tracing") for how this ties into the
+saga flow across services.
+
+## CI/CD
+
+`.github/workflows/ci-cd.yml`: every push/PR runs install, `prisma generate`,
+tests with coverage, and build. On push to `main`, once tests pass, it also
+builds and pushes a Docker image to GHCR
+(`ghcr.io/<owner>/fiap-os-service:latest` and `:<sha>`).
+
 ## Testing
 
 Unit tests cover the domain entity/events and all application use-cases
